@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* **Experimental**: Added an option for configuring a custom string size limit in
+  the MessagePack serializer. The maximum string length, in characters, can be
+  set using the `PrivatePreviewLogMessagePackStringSizeLimit=<CharCount>`
+  connection string parameter.
+  ([#2813](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/2813))
+* Add httpUrl for HTTP server spans mapped from multiple attributes.
+  ([#2818](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/2818))
+
 ## 1.12.0
 
 Released 2025-May-06
