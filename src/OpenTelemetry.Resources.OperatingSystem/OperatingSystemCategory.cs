@@ -9,5 +9,7 @@ internal enum OperatingSystemCategory
     Android,
     AppleOS,
     Linux,
+    FreeBSD,
     MacOS,
+    Wasm,
 }

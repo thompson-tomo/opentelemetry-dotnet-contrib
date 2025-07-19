@@ -93,7 +93,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
         }
 
         if (this.osCategory != OperatingSystemCategory.Linux
-        && this.osCategory != OperatingSystemCategory.MacOS)
+            && this.osCategory != OperatingSystemCategory.MacOS)
         {
             attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemBuildId, Environment.OSVersion.Version.Build.ToString(CultureInfo.InvariantCulture.NumberFormat)));
             attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemVersion, Environment.OSVersion.Version.ToString()));
@@ -124,6 +124,14 @@ internal sealed class OperatingSystemDetector : IResourceDetector
         else if (this.osCategory == OperatingSystemCategory.MacOS)
         {
             this.AddMacOSAttributes(attributes);
+        }
+        else if (this.osCategory == OperatingSystemCategory.Wasm)
+        {
+            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "wasm"));
+        }
+        else if (this.osCategory == OperatingSystemCategory.FreeBSD)
+        {
+            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
         }
 #endif
 
@@ -164,13 +172,21 @@ internal sealed class OperatingSystemDetector : IResourceDetector
         {
             return OperatingSystemCategory.Android;
         }
-        else if (System.OperatingSystem.IsLinux() || System.OperatingSystem.IsFreeBSD())
+        else if (System.OperatingSystem.IsLinux())
         {
             return OperatingSystemCategory.Linux;
         }
         else if (System.OperatingSystem.IsMacOS())
         {
             return OperatingSystemCategory.MacOS;
+        }
+        else if (System.OperatingSystem.IsWasi())
+        {
+            return OperatingSystemCategory.Wasm;
+        }
+        else if (System.OperatingSystem.IsFreeBSD())
+        {
+            return OperatingSystemCategory.FreeBSD;
         }
 
         return null;
