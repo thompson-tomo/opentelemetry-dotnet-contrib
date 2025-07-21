@@ -1,10 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET
+#if !NETFRAMEWORK
 using System.Runtime.InteropServices;
-#endif
-#if NET
 using System.Xml.Linq;
 #endif
 using System.Globalization;
@@ -18,7 +16,7 @@ namespace OpenTelemetry.Resources.OperatingSystem;
 internal sealed class OperatingSystemDetector : IResourceDetector
 {
     private const string RegistryKey = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
-#if NET
+#if !NETFRAMEWORK
     private const string KernelOsRelease = "/proc/sys/kernel/osrelease";
     private static readonly string[] DefaultEtcOsReleasePaths =
     [
@@ -35,7 +33,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
 
     private readonly OperatingSystemCategory? osCategory;
     private readonly string? registryKey;
-#if NET
+#if !NETFRAMEWORK
     private readonly string? kernelOsRelease;
     private readonly string[]? etcOsReleasePaths;
     private readonly string[]? plistFilePaths;
@@ -43,7 +41,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
 #endif
 
     internal OperatingSystemDetector()
-#if NET
+#if !NETFRAMEWORK
         : this(GetOSCategory(), RegistryKey, KernelOsRelease, DefaultEtcOsReleasePaths, DefaultPlistFilePaths)
 #else
         : this(GetOSCategory(), RegistryKey)
@@ -51,7 +49,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
     {
     }
 
-#if NET
+#if !NETFRAMEWORK
     /// <summary>
     /// Initializes a new instance of the <see cref="OperatingSystemDetector"/> class for testing.
     /// </summary>
@@ -72,7 +70,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
     {
         this.osCategory = osCategory;
         this.registryKey = registryKey;
-#if NET
+#if !NETFRAMEWORK
         this.kernelOsRelease = kernelOsRelease;
         this.etcOsReleasePaths = etcOsReleasePath;
         this.plistFilePaths = plistFilePaths;
@@ -100,40 +98,36 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemDescription, GetOSDescription()));
         }
 
-        if (this.osCategory == OperatingSystemCategory.Windows)
+        switch (this.osCategory)
         {
-            this.AddWindowsAttributes(attributes);
-        }
-#if NET
-        else if (this.osCategory == OperatingSystemCategory.AppleOS)
-        {
-            AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemName, GetOSName());
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemFamily, OSFamilyApple));
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
-        }
-        else if (this.osCategory == OperatingSystemCategory.Android)
-        {
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemName, "Android"));
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemFamily, OSFamilyAndroid));
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
-        }
-        else if (this.osCategory == OperatingSystemCategory.Linux)
-        {
-            this.AddLinuxAttributes(attributes);
-        }
-        else if (this.osCategory == OperatingSystemCategory.MacOS)
-        {
-            this.AddMacOSAttributes(attributes);
-        }
-        else if (this.osCategory == OperatingSystemCategory.Wasm)
-        {
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "wasm"));
-        }
-        else if (this.osCategory == OperatingSystemCategory.FreeBSD)
-        {
-            attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
-        }
+            case OperatingSystemCategory.Windows:
+                this.AddWindowsAttributes(attributes);
+                break;
+#if !NETFRAMEWORK
+            case OperatingSystemCategory.AppleOS:
+                AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemName, GetOSName());
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemFamily, OSFamilyApple));
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
+                break;
+            case OperatingSystemCategory.Android:
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemName, "Android"));
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemFamily, OSFamilyAndroid));
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
+                break;
+            case OperatingSystemCategory.Linux:
+                this.AddLinuxAttributes(attributes);
+                break;
+            case OperatingSystemCategory.MacOS:
+                this.AddMacOSAttributes(attributes);
+                break;
+            case OperatingSystemCategory.Wasm:
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "wasm"));
+                break;
+            case OperatingSystemCategory.FreeBSD:
+                attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
+                break;
 #endif
+        }
 
         return new Resource(attributes);
     }
@@ -157,7 +151,14 @@ internal sealed class OperatingSystemDetector : IResourceDetector
 
     private static OperatingSystemCategory? GetOSCategory()
     {
-#if NET
+#if NETFRAMEWORK
+        return OperatingSystemCategory.Windows;
+#elif NETSTANDARD
+        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? OperatingSystemCategory.Windows
+            : RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? OperatingSystemCategory.Linux
+            : RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? OperatingSystemCategory.MacOS
+            : null;
+#else
         if (System.OperatingSystem.IsWindows())
         {
             return OperatingSystemCategory.Windows;
@@ -190,10 +191,13 @@ internal sealed class OperatingSystemDetector : IResourceDetector
         }
 
         return null;
-#else
-        return OperatingSystemCategory.Windows;
 #endif
     }
+
+#if NETSTANDARD
+    private static string GetOSName()
+        => "UNKNOWN";
+#endif
 
 #if NET
     private static string GetOSName()
@@ -216,7 +220,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
 #endif
 
     private static string GetOSDescription() =>
-#if NET
+#if !NETFRAMEWORK
         RuntimeInformation.OSDescription;
 #else
         Environment.OSVersion.ToString();
@@ -254,7 +258,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
 #pragma warning restore CA1416
 #pragma warning restore CA1308
 
-#if NET
+#if !NETFRAMEWORK
     // based on:
     // https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/Interop/Linux/os-release/Interop.OSReleaseFile.cs
     private void AddLinuxAttributes(List<KeyValuePair<string, object>> attributes)
@@ -287,7 +291,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemBuildId, buildIdContent);
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemDescription, description.IsEmpty ? null : description.ToString());
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemName, name.IsEmpty ? "Linux" : name.ToString());
-            AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemFamily, like.IsEmpty ? null : like.ToString().Split(" "));
+            AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemFamily, like.IsEmpty ? null : like.ToString().Split(' '));
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemVersion, version.IsEmpty ? null : version.ToString());
 
             attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
@@ -297,6 +301,28 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             OperatingSystemResourcesEventSource.Log.ResourceAttributesExtractException("Failed to get Linux attributes", ex);
         }
 
+#if NETSTANDARD
+        static bool TryGetFieldValue(ReadOnlySpan<char> line, string prefix, ref ReadOnlySpan<char> value)
+        {
+            if (!line.StartsWith(prefix.AsSpan()))
+            {
+                return false;
+            }
+
+            var fieldValue = line.Slice(prefix.Length);
+
+            // Remove enclosing quotes if present.
+            if (fieldValue.Length >= 2 &&
+                (fieldValue[0] == '"' || fieldValue[0] == '\'') &&
+                fieldValue[0] == fieldValue[fieldValue.Length - 1])
+            {
+                fieldValue = fieldValue.Trim(fieldValue[0]);
+            }
+
+            value = fieldValue;
+            return true;
+        }
+#else
         static bool TryGetFieldValue(ReadOnlySpan<char> line, ReadOnlySpan<char> prefix, ref ReadOnlySpan<char> value)
         {
             if (!line.StartsWith(prefix))
@@ -317,6 +343,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             value = fieldValue;
             return true;
         }
+#endif
     }
 
     private void AddMacOSAttributes(List<KeyValuePair<string, object>> attributes)
@@ -379,4 +406,4 @@ internal sealed class OperatingSystemDetector : IResourceDetector
         }
     }
 #endif
-}
+    }

@@ -15,7 +15,7 @@ public class OperatingSystemDetectorTests
 
         string expectedPlatform;
         bool windows = true
-#if NET
+#if !NETFRAMEWORK
             && System.OperatingSystem.IsWindows()
 #endif
             ;
@@ -48,7 +48,7 @@ public class OperatingSystemDetectorTests
         Assert.Equal(expectedPlatform, resourceAttributes[OperatingSystemSemanticConventions.AttributeOperatingSystemType]);
     }
 
-#if NET
+#if !NETFRAMEWORK
     [Fact]
     public void TestParseMacOSPlist()
     {
