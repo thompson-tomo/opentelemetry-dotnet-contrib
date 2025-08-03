@@ -236,6 +236,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             if (key != null)
             {
                 AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemName, key.GetValue("ProductName")?.ToString());
+                AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemVariantId, key.GetValue("EditionID")?.ToString());
             }
         }
         catch (Exception ex)
@@ -273,7 +274,7 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             }
 
             var osReleaseContent = File.ReadAllLines(etcOsReleasePath);
-            ReadOnlySpan<char> buildId = default, name = default, version = default, description = default, like = default;
+            ReadOnlySpan<char> buildId = default, name = default, version = default, description = default, like = default, variant = default, variantId = default;
 
             foreach (var line in osReleaseContent)
             {
@@ -283,7 +284,9 @@ internal sealed class OperatingSystemDetector : IResourceDetector
                     TryGetFieldValue(lineSpan, "NAME=", ref name) ||
                     TryGetFieldValue(lineSpan, "VERSION_ID=", ref version) ||
                     TryGetFieldValue(lineSpan, "ID_LIKE=", ref like) ||
-                    TryGetFieldValue(lineSpan, "PRETTY_NAME=", ref description);
+                    TryGetFieldValue(lineSpan, "PRETTY_NAME=", ref description) ||
+                    TryGetFieldValue(lineSpan, "VARIANT_ID=", ref variantId) ||
+                    TryGetFieldValue(lineSpan, "VARIANT=", ref variant);
             }
 
             var buildIdContent = buildId.IsEmpty ? File.ReadAllText(this.kernelOsRelease!).Trim() : buildId.ToString();
@@ -293,6 +296,8 @@ internal sealed class OperatingSystemDetector : IResourceDetector
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemName, name.IsEmpty ? "Linux" : name.ToString());
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemFamily, like.IsEmpty ? null : like.ToString().Split(' '));
             AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemVersion, version.IsEmpty ? null : version.ToString());
+            AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemVariantId, variantId.IsEmpty ? null : variantId.ToString());
+            AddAttributeIfNotNullOrEmpty(attributes, AttributeOperatingSystemVariantName, variant.IsEmpty ? null : variant.ToString());
 
             attributes.Add(new KeyValuePair<string, object>(AttributeOperatingSystemType, "unix"));
         }

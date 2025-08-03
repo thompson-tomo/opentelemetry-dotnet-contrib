@@ -11,6 +11,8 @@ internal static class OperatingSystemSemanticConventions
     public const string AttributeOperatingSystemName = "os.name";
     public const string AttributeOperatingSystemVersion = "os.version";
     public const string AttributeOperatingSystemFamily = "os.family";
+    public const string AttributeOperatingSystemVariantId = "os.variant.id";
+    public const string AttributeOperatingSystemVariantName = "os.variant.name";
 
     public static string[] OSFamilyApple = ["darwin"];
     public static string[] OSFamilyWindows = ["windows"];

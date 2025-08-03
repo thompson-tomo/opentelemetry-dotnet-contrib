@@ -88,6 +88,8 @@ public class OperatingSystemDetectorTests
         Assert.Equal("unix", attributes[OperatingSystemSemanticConventions.AttributeOperatingSystemType]);
         Assert.Equal("22.04", attributes[OperatingSystemSemanticConventions.AttributeOperatingSystemVersion]);
         Assert.Equal("5.15.0-76-generic", attributes[OperatingSystemSemanticConventions.AttributeOperatingSystemBuildId]);
+        Assert.Equal("Comp Neuro", attributes[OperatingSystemSemanticConventions.AttributeOperatingSystemVariantName]);
+        Assert.Equal("compneuro", attributes[OperatingSystemSemanticConventions.AttributeOperatingSystemVariantId]);
     }
 
     [Fact]
