@@ -95,8 +95,7 @@ added & enabled to the corresponding telemetry provider.
 
 | Attribute| Comment |
 | --- | --- |
-| `azure.vm.scaleset.name`   | |
-| `azure.vm.sku`             | |
+| `azure.vm.scaleset.name` | |
 
 ### Container Apps Resource Detector
 
